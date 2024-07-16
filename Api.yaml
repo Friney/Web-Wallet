@@ -1,0 +1,837 @@
+openapi: 3.0.3
+info:
+  title: Кошелек Картошка
+  version: 0.1.0
+  description: Простое приложение для управления электронной бумажник
+
+tags:
+  - name: User
+    description: Операции с пользователем
+  - name: Ticket
+    description: Операции со счётом
+  - name: Wallet
+    description: Операции с кошельком
+  - name: Transfer
+    description: Операции с переводами
+  - name: Session
+    description: Операции с сессией
+
+paths:
+  /users:
+    get:
+      tags:
+        - User
+      summary: Получить всех пользователей
+      description: Получить всех пользователей
+      operationId: getClients
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ShowUser"
+        "default":
+          description: Any error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags:
+        - User
+      summary: Добавить нового пользователя
+      description: Добавить нового пользователя
+      operationId: addClient
+      requestBody:
+        description: Создать нового пользователя
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateUser"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /users/{id}:
+    get:
+      tags:
+        - User
+      summary: Найти пользователя по ID
+      description: Возвращает одного пользователя
+      operationId: getClientById
+      parameters:
+        - name: id
+          in: path
+          description: ID пользователя для возврата
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShowUser"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      tags:
+        - User
+      summary: Обновить Фамилию, Имя, Отчество или дату рождения существующего пользователя
+      description: Обновить Фамилию, Имя, Отчество или дату рождения  существующего пользователя
+      operationId: updateClient
+      parameters:
+        - name: id
+          in: path
+          description: ID пользователя
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Обновить пользователя
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SessionToken"
+                - $ref: "#/components/schemas/UpdateUser"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/create:
+    post:
+      tags:
+        - Session
+      summary: Создать новую сессию
+      description: Создать новую сессию
+      operationId: createSession
+      requestBody:
+        description: Создать новую сессию
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSession"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionToken"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions/exit:
+    delete:
+      tags:
+        - Session
+      summary: Завершить сессию
+      description: Завершить сессию
+      operationId: exitSession
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /sessions:
+    get:
+      tags:
+        - Session
+      summary: Получить сессию
+      description: Получить сессию
+      operationId: getSessionById
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Session"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /wallets/{id}:
+    get:
+      tags:
+        - Wallet
+      summary: Получить кошелек по ID пользователя
+      description: Получить кошелек по ID пользователя
+      operationId: getWalletById
+      parameters:
+        - name: id
+          in: path
+          description: ID пользователя кошелька для возврата
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 43afdd8b-8y9c-4af9-58d7-0bd110c57444
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wallet"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transfers/phone:
+    post:
+      tags:
+        - Transfer
+      summary: Создать новый перевод на номер телефона
+      description: Создать новый перевод на номер телефона
+      operationId: createTransferPhone
+      parameters:
+        - name: phone
+          in: query
+          description: номер телефона
+          required: true
+          schema:
+            type: string
+            example: 79999999999
+      requestBody:
+        description: Создать новый перевод
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SessionToken"
+                - $ref: "#/components/schemas/Transfer"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transfer"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transfers/wallet:
+    post:
+      tags:
+        - Transfer
+      summary: Создать новый перевод на кошелек
+      description: Создать новый перевод на кошелек
+      operationId: createTransferWallet
+      parameters:
+        - name: walletId
+          in: query
+          description: ID кошелька
+          required: true
+          schema:
+            type: string
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Создать новый перевод
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SessionToken"
+                - $ref: "#/components/schemas/Transfer"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transfer"
+
+  /transfers/{id}:
+    get:
+      tags:
+        - Transfer
+      summary: Получить перевод по ID
+      description: Возвращает один перевод
+      operationId: getTransferById
+      parameters:
+        - name: id
+          in: path
+          description: ID перевода для возврата
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transfer"
+
+  /transfers:
+    get:
+      tags:
+        - Transfer
+      summary: Получить все переводы Отфильтровать по статусу, типу, пользователю
+      description: Получить все переводы Отфильтровать по статусу, типу, пользователю
+      operationId: getTransfers
+      requestBody:
+        description: Получить все отфильтрованы переводы
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/SessionToken"
+                - $ref: "#/components/schemas/TransferFilter"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transfer"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tickets:
+    get:
+      tags:
+        - Ticket
+      summary: Получить все операции со счётом
+      description: Получить все операции со счётом
+      operationId: getTickets
+      parameters:
+        - name: type
+          in: query
+          description: Отфильтровать по типу
+          required: false
+          schema:
+            type: string
+            enum: ["NotPaid", "All"]
+            example: all
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    post:
+      tags:
+        - Ticket
+      summary: Добавить новую операцию со счётом
+      description: Добавить новую операцию со счётом
+      operationId: addTicket
+      requestBody:
+        description: Создать новую операцию со счётом
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Ticket"
+                - $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tickets/{id}:
+    get:
+      tags:
+        - Ticket
+      summary: Получить операцию со счётом по ID
+      description: Получить операцию со счётом по ID
+      operationId: getTicketById
+      parameters:
+        - name: id
+          in: path
+          description: ID операции для возврата
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tickets/cancel/{id}:
+    delete:
+      tags:
+        - Ticket
+      summary: Отмена операции со счётом
+      description: Отмена операции со счётом
+      operationId: cancelTicket
+      parameters:
+        - name: id
+          in: path
+          description: ID of ticket to return
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /tickets/pay/{id}:
+    patch:
+      tags:
+        - Ticket
+      summary: Оплатить операцию со счётом
+      description: Оплатить операцию со счётом
+      operationId: payTicket
+      parameters:
+        - name: id
+          in: path
+          description: ID операции для возврата
+          required: true
+          schema:
+            type: string
+            format: uuid
+            example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+      requestBody:
+        description: Токен сессии
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionToken"
+        required: true
+      responses:
+        "200":
+          description: Успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "default":
+          description: Любая ошибка
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        surname:
+          type: string
+          example: Александрович
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        name:
+          type: string
+          example: Александр
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        patronymic:
+          type: string
+          example: Иванович
+          description: (Опционально) Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        phoneNumber:
+          type: string
+          example: 71111111111
+          description: 11 цифр Начинается с 7
+          format: 7XXXXXXXXXX
+        emailAddress:
+          type: string
+          example: name@mailru
+          description: "*{3,20}@*{3,20}*{2,7} адрес электронной почты пользователя"
+        birthDate:
+          type: string
+          format: ISO 8601
+          example: 2002-05-30
+        password:
+          type: string
+          description: Строка Длина - от 8 до 64 символов Симвы - русские буквы, цифры, знаки (!?) Требования - по крайней мере 1 из обеих заглавных и строчных По крайней мере 1 цифры По крайней мере 1 знака
+          example: pA55woRd!
+
+    CreateUser:
+      type: object
+      properties:
+        surname:
+          type: string
+          example: Александрович
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        name:
+          type: string
+          example: Александр
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        patronymic:
+          type: string
+          example: Иванович
+          description: (Опционально) Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        phoneNumber:
+          type: string
+          example: 71111111111
+          description: 11 цифр Начинается с 7
+          format: 7XXXXXXXXXX
+        emailAddress:
+          type: string
+          example: name@mailru
+          description: "*{3,20}@*{3,20}*{2,7} адрес электронной почты пользователя"
+        birthDate:
+          type: string
+          format: ISO 8601
+          example: 2002-05-30
+        password:
+          type: string
+          description: Строка Длина - от 8 до 64 символов Симвы - русские буквы, цифры, знаки (!?) Требования - по крайней мере 1 из обеих заглавных и строчных По крайней мере 1 цифры По крайней мере 1 знака
+          example: pA55woRd!
+
+    UpdateUser:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Александр
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        surname:
+          type: string
+          example: Александрович
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        patronymic:
+          type: string
+          example: Иванович
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        birthDate:
+          type: string
+          format: ISO 8601
+          example: 2002-05-30
+
+    ShowUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        surname:
+          type: string
+          example: Александрович
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        name:
+          type: string
+          example: Александр
+          description: Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        patronymic:
+          type: string
+          example: Иванович
+          description: (Опционально) Допускается только русский язык Длина не более 50 символов Первая буква заглавная
+        phoneNumber:
+          type: string
+          example: 71111111111
+          description: 11 цифр Начинается с 7
+          format: 7XXXXXXXXXX
+        emailAddress:
+          type: string
+          example: name@mailru
+          description: "*{3,20}@*{3,20}*{2,7} адрес электронной почты пользователя"
+        birthDate:
+          type: string
+          format: ISO 8601
+          example: 2002-05-30
+
+    Ticket:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        price:
+          type: integer
+          format: uint64
+          description: Только положительные целые числа
+          example: 100
+        senderId:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        recipientId:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        commentary:
+          type: string
+          description: (Опционально) Длина не более 250 символов
+        status:
+          type: string
+          enum: ["Paid", "NotPaid", "Canceled"]
+          example: "Paid"
+        date:
+          type: string
+          format: ISO 8601
+          example: 2002-05-30:00:00:00
+
+    Wallet:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uuid
+          description: Номер кошелька
+          example: 423
+        balance:
+          type: integer
+          example: 100
+
+    Transfer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        date:
+          type: string
+          format: ISO 8601
+          example: 2024-07-03T09:22:54
+        sum:
+          type: integer
+          example: 1801
+          description: Только положительные целые числа
+
+    TransferFilter:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: ["Paid", "NotPaid"]
+          example: "Paid"
+        type:
+          type: string
+          enum: ["Income", "Outcome"]
+          example: "Income"
+        user:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 87agcd2b-9b4v-4df7-8hf7-0rv110jf74t4
+        userId:
+          type: string
+          format: uuid
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+        dateStart:
+          type: string
+          format: ISO 8601
+          example: 2024-07-03T09:22:54
+        dateEnd:
+          type: string
+          format: ISO 8601
+          example: 2024-07-03T09:22:54
+        status:
+          type: string
+          enum: ["Active", "Inactive"]
+          example: "Active"
+
+    SessionToken:
+      type: object
+      properties:
+        token:
+          type: string
+          format: uuid
+          description: Идентификатор сессии
+          example: 42abcd2b-8b9c-4af9-88f7-0bc180cf74b4
+
+    CreateSession:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: 71111111111
+          description: 11 цифр Начинается с 7
+          format: 7XXXXXXXXXX
+        password:
+          type: string
+          description: Строка Длина - от 8 до 64 символов Симвы - русские буквы, цифры, знаки (!?) Требования - по крайней мере 1 из обеих заглавных и строчных По крайней мере 1 цифры По крайней мере 1 знака
+          example: pA55woRd!
+
+    Error:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 404
+        message:
+          type: string
+          example: Not found
