@@ -38,8 +38,6 @@ public class TicketService {
     private final ConversionService conversionService;
 
     public List<TicketDto> getAllFiltered(TicketFindByFilteredRequest ticketFindByFilteredRequest, @PathVariable UUID userId) {
-        // Тут нужны переносы строк перед точками в filter?
-        // Вроде бы да, тк вызово больше 3х, но такое ощущение что с ними выглядит менее читаемым
         TicketType ticketType = conversionService.convert(ticketFindByFilteredRequest.type(), TicketType.class);
         TicketStatus ticketStatus = conversionService.convert(ticketFindByFilteredRequest.status(), TicketStatus.class);
         List<Ticket> ticketList = ticketRepository
@@ -56,6 +54,10 @@ public class TicketService {
                                 .equals(userId)
                 )
                 .filter(
+                        ticket -> ticketStatus == null
+                                || ticketStatus.equals(ticket.getPaid())
+                )
+                .filter(
                         ticket -> ticketType == null
                                 || ticketType.equals(TicketType.INCOME) == ticket
                                 .getReceiverUser()
@@ -66,8 +68,6 @@ public class TicketService {
                                 .getId()
                                 .equals(userId)
                 )
-                .filter(ticket -> ticketStatus == null
-                        || ticketStatus.equals(ticket.getPaid()))
                 .filter(
                         ticket -> ticketFindByFilteredRequest.userId() == null
                                 || ticket
@@ -93,21 +93,13 @@ public class TicketService {
         Wallet senderWallet = walletRepository.findByUserId(senderId).orElseThrow(
                 () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("Wallet not found for user %s", senderId)))
         );
-        User recipient = userRepository.findByPhone(transferCreateByPhone.phone()).orElseThrow(
+        User receiver = userRepository.findByPhone(transferCreateByPhone.phone()).orElseThrow(
                 () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("User with phone %s not found", transferCreateByPhone.phone())))
         );
-        Wallet recipientWallet = walletRepository.findByUserId(recipient.getId()).orElseThrow(
-                () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("Wallet not found for user %s", recipient.getId())))
+        Wallet receiverWallet = walletRepository.findByUserId(receiver.getId()).orElseThrow(
+                () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("Wallet not found for user %s", receiver.getId())))
         );
-        if (senderWallet.equals(recipientWallet)) {
-            throw new ServiceException(new AppError(HttpStatus.BAD_REQUEST.value(), "You can't transfer money to yourself"));
-        }
-        if (paid) {
-            senderWallet.setBalance(senderWallet.getBalance() - transferCreateByPhone.amount());
-            recipientWallet.setBalance(recipientWallet.getBalance() + transferCreateByPhone.amount());
-        }
-        TicketStatus paidStatus = paid ? TicketStatus.PAID : TicketStatus.NOT_PAID;
-        return ticketMapper.map(createTransfer(senderWallet, recipientWallet, transferCreateByPhone.amount(), paidStatus));
+        return getTicketDto(paid, senderWallet, receiverWallet, transferCreateByPhone.amount());
     }
 
     public TicketDto createByWallet(TicketCreateByWalletRequest ticketCreateByWalletRequest, UUID senderId) {
@@ -115,15 +107,22 @@ public class TicketService {
         Wallet senderWallet = walletRepository.findByUserId(senderId).orElseThrow(
                 () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("Wallet not found for user %s", senderId)))
         );
-        Wallet recipientWallet = walletRepository.findById(ticketCreateByWalletRequest.numberWallet()).orElseThrow(
+        Wallet receiverWallet = walletRepository.findById(ticketCreateByWalletRequest.numberWallet()).orElseThrow(
                 () -> new ServiceException(new AppError(HttpStatus.NOT_FOUND.value(), String.format("Wallet not found for number %s", ticketCreateByWalletRequest.numberWallet())))
         );
+        return getTicketDto(paid, senderWallet, receiverWallet, ticketCreateByWalletRequest.amount());
+    }
+
+    private TicketDto getTicketDto(boolean paid, Wallet senderWallet, Wallet receiverWallet, int amount) {
+        if (senderWallet.equals(receiverWallet)) {
+            throw new ServiceException(new AppError(HttpStatus.BAD_REQUEST.value(), "You can't transfer money to yourself"));
+        }
         if (paid) {
-            senderWallet.setBalance(senderWallet.getBalance() - ticketCreateByWalletRequest.amount());
-            recipientWallet.setBalance(recipientWallet.getBalance() + ticketCreateByWalletRequest.amount());
+            senderWallet.setBalance(senderWallet.getBalance() - amount);
+            receiverWallet.setBalance(receiverWallet.getBalance() + amount);
         }
         TicketStatus paidStatus = paid ? TicketStatus.PAID : TicketStatus.NOT_PAID;
-        return ticketMapper.map(createTransfer(senderWallet, recipientWallet, ticketCreateByWalletRequest.amount(), paidStatus));
+        return ticketMapper.map(createTransfer(senderWallet, receiverWallet, amount, paidStatus));
     }
 
     private Ticket createTransfer(Wallet senderWallet, Wallet recipientWallet, Integer amount, TicketStatus paid) {
@@ -131,10 +130,9 @@ public class TicketService {
         ticket.setCreationDate(LocalDateTime.now());
         ticket.setAmount(amount);
         ticket.setPaid(paid);
-        System.out.println(senderWallet.getUser().getId() + " " + recipientWallet.getUser().getId());
         ticket.setSenderUser(senderWallet.getUser());
         ticket.setReceiverUser(recipientWallet.getUser());
-        System.out.println("Sender: " + ticket.getSenderUser().getId() + " recipient: " + ticket.getReceiverUser().getId());
         return ticketRepository.save(ticket);
     }
+
 }

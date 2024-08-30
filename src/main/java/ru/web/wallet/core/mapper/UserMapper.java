@@ -1,6 +1,7 @@
 package ru.web.wallet.core.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingConstants;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -22,7 +23,12 @@ public interface UserMapper {
 
     List<UserDto> map(List<User> users);
 
+    @Mapping(target = "id", ignore = true)
     User map(UserCreateRequest userPatchRequest);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "email", ignore = true)
+    @Mapping(target = "phone", ignore = true)
+    @Mapping(target = "password", ignore = true)
     User map(@MappingTarget User user, UserPatchRequest userPatchRequest);
 }

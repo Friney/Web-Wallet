@@ -19,11 +19,12 @@ public class WalletService {
     private final WalletRepository walletRepository;
     private final WalletMapper walletMapper;
 
-    public void create(User user) {
+    public WalletDto create(User user) {
         Wallet wallet = new Wallet();
         wallet.setBalance(100);
         wallet.setUser(user);
-        walletRepository.save(wallet);
+        wallet = walletRepository.save(wallet);
+        return walletMapper.map(wallet);
     }
 
     public WalletDto getUserWallet(UUID id) {

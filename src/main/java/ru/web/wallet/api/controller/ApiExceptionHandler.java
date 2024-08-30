@@ -22,20 +22,6 @@ public class ApiExceptionHandler {
         return new ResponseEntity<>(exception.getAppError(), HttpStatus.valueOf(exception.getAppError().statusCode()));
     }
 
-//    @Override
-//    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-//        List<AppError> errors = ex.getBindingResult()
-//                .getAllErrors()
-//                .stream()
-//                .map(
-//                        error -> new AppError(HttpStatus.BAD_REQUEST.value(), error.getDefaultMessage()
-//                                + " " + request.getContextPath())
-//                )
-//                .toList();
-////        return new ResponseEntity<>(new AppError(status.value(), ex.fie + " " + ex.getBindingResult().getAllErrors().get(0).getDefaultMessage()), HttpStatus.BAD_REQUEST);
-//        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-//    }
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<List<AppError>> handle(MethodArgumentNotValidException ex) {
         List<AppError> errors = ex.getBindingResult()
